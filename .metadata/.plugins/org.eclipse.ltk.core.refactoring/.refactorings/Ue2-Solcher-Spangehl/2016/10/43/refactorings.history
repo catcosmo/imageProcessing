@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;kernelSize&apos; in &apos;FloodFilling.getNeighbours(...)&apos; to &apos;amountNeighbours&apos;&#x0A;- Original project: &apos;Ue2-Solcher-Spangehl&apos;&#x0A;- Original element: &apos;FloodFilling.getNeighbours(int[], int, int).kernelSize&apos;&#x0A;- Renamed element: &apos;kernelSize&apos;&#x0A;- Update references to refactored element" description="Rename local variable &apos;kernelSize&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;{FloodFilling.java[FloodFilling~getNeighbours~\[I~I~I@kernelSize!8797!8810!8801!8810!I!0!true" name="amountNeighbours" references="true" stamp="1477403954671" version="1.0"/>
+</session>
