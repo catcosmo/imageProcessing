@@ -231,6 +231,12 @@ public class FloodFilling extends JPanel {
 
 		statusLine.setText(message + " in " + time + " ms");
 	}
+	
+	private void seqRegion(int[] pixels){
+		for(int i=0; i < pixels.length; i++){
+			
+		}
+	}
 
 	private void depthFirst(int[] pixels) {
 		for(int i=0; i < pixels.length; i++){

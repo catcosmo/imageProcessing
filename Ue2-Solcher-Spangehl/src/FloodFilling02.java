@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 import java.util.concurrent.ThreadLocalRandom;
- 
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -236,10 +236,7 @@ public class FloodFilling02 extends JPanel {
         boolean[] visited = new boolean[pixels.length];
         for (int i = 0; i < pixels.length; i++) {
             if (pixels[i] == BLACK) {
-                int r = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int g = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int b = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int rgb = 65536 * r + 256 * g + b;
+                int rgb = Utils.getRandomColor();
                 Queue<int[]> queue = new LinkedList<int[]>();
                 if (!visited[i])
                     queue.add(getPixelPos(i, srcView.getImgWidth()));
@@ -250,6 +247,7 @@ public class FloodFilling02 extends JPanel {
             }
         }
     }
+    
  
     private void pushQueueEvolved(int[] pixels, int rgb, boolean[] visited, Queue<int[]> queue) {
         int[] pos = queue.poll();
@@ -274,10 +272,7 @@ public class FloodFilling02 extends JPanel {
         boolean[] visited = new boolean[pixels.length];
         for (int i = 0; i < pixels.length; i++) {
             if (pixels[i] == BLACK) {
-                int r = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int g = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int b = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int rgb = 65536 * r + 256 * g + b;
+                int rgb = Utils.getRandomColor();
                 Stack<int[]> stack = new Stack<int[]>();
                 if (!visited[i])
                     stack.push(getPixelPos(i, srcView.getImgWidth()));
@@ -293,10 +288,7 @@ public class FloodFilling02 extends JPanel {
         boolean[] visited = new boolean[pixels.length];
         for (int i = 0; i < pixels.length; i++) {
             if (pixels[i] == BLACK) {
-                int r = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int g = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int b = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int rgb = 65536 * r + 256 * g + b;
+                int rgb = Utils.getRandomColor();
                 Stack<int[]> stack = new Stack<int[]>();
                 if (!visited[i])
                     stack.push(getPixelPos(i, srcView.getImgWidth()));
@@ -348,35 +340,40 @@ public class FloodFilling02 extends JPanel {
     }
     
     
-    //TODO: dynamisieern
     private int[] getNeighbours(int[] pixels, int pixelPos, int kernelSize) {
+    	int amountNeighbours = kernelSize -1;
         int[] neighbours = new int[kernelSize];
+        int r = (int) ((Math.sqrt(amountNeighbours))/2);
         int neighbourcount = 0;
         int[] xY = getPixelPos(pixelPos, srcView.getImgWidth());
         int x = xY[0];
         int y = xY[1];
-        for (int i = -1; i < 2; i++) {
-            for (int j = -1; j < 2; j++) {
-                int currWidth = x + j;
-                int currHeight = y + i;
-                neighbours[neighbourcount] = Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
-                        srcView.getImgHeight());
-                neighbourcount++;
+        for (int j = -r; j <= r; j++) {
+            for (int i = -r; i <= r; i++) {
+                int currWidth = x + i;
+                int currHeight = y + j;
+                if(i!=currWidth&&j!=currHeight){
+	                neighbours[neighbourcount] = Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
+	                        srcView.getImgHeight());
+	                neighbourcount++;
+                }
             }
         }
         return neighbours;
     }
  
     private int[] getNeighboursInPicture(int[] pixels, int pixelPos, int kernelSize, boolean[] visited) {
+    	int amountNeighbours = kernelSize -1;
         int[] neighbours = new int[kernelSize];
+        int r = (int) ((Math.sqrt(amountNeighbours))/2);
         int neighbourcount = 0;
         int[] xY = getPixelPos(pixelPos, srcView.getImgWidth());
         int x = xY[0];
         int y = xY[1];
-        for (int i = -1; i < 2; i++) {
-            for (int j = -1; j < 2; j++) {
-                int currWidth = x + j;
-                int currHeight = y + i;
+        for (int j = -r; j <= r; j++) {
+            for (int i = -r; i <= r; i++) {
+                int currWidth = x + i;
+                int currHeight = y + j;
                 if (currWidth > 0 && currHeight > 0 && !(currWidth == x && currHeight == y)
                         && currWidth < srcView.getWidth() && currHeight < srcView.getHeight()) {
                     int thisPixelPos = Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
@@ -396,10 +393,7 @@ public class FloodFilling02 extends JPanel {
         boolean[] visited = new boolean[pixels.length];
         for (int i = 0; i < pixels.length; i++) {
             if (pixels[i] == BLACK) {
-                int r = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int g = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int b = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-                int rgb = 65536 * r + 256 * g + b;
+                int rgb = Utils.getRandomColor();
                 Queue<int[]> queue = new LinkedList<int[]>();
                 if (!visited[i])
                     queue.add(getPixelPos(i, srcView.getImgWidth()));

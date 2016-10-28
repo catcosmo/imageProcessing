@@ -1,1 +1,6 @@
 1477403954671	Rename local variable 'kernelSize'
+1477598176212	Rename local variable 'i'
+1477598191368	Rename local variable 'k'
+1477599153193	Rename method 'getNeighboursInPicture'
+1477599188206	Rename local variable 'i'
+1477599727533	Rename method 'getNeighboursSafe'

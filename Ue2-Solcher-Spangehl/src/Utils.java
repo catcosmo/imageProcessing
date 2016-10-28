@@ -1,3 +1,5 @@
+import java.util.concurrent.ThreadLocalRandom;
+
 
 public class Utils {
 
@@ -659,6 +661,16 @@ public class Utils {
 		YCbCr[0] = ((YCbCr[0] - 127.5) * contrast) + 127.5;
 		return YCbCr;
 	}
+	
+    @SuppressWarnings("unused") 
+    public static int getRandomColor(){
+    	int r = ThreadLocalRandom.current().nextInt(1, 255 + 1);
+        int g = ThreadLocalRandom.current().nextInt(1, 255 + 1);
+        int b = ThreadLocalRandom.current().nextInt(1, 255 + 1);
+        int rgb = 65536 * r + 256 * g + b;
+        return rgb; 	
+    }
+	
 
 	// TODO autocorrect, korrigiert leider nur das histogram, aendert aber nicht
 	// das bild :)
