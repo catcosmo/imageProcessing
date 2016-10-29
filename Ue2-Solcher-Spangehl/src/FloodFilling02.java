@@ -20,17 +20,16 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class FloodFilling02 extends JPanel {
@@ -52,6 +51,7 @@ public class FloodFilling02 extends JPanel {
 	static final int TH_INIT = 128;
 	private int[] histogram = new int[256];
 	private int[] originalPic;
+	private List<Integer> colorList = new ArrayList<Integer>();
 
 	private static JFrame frame;
 
@@ -60,9 +60,6 @@ public class FloodFilling02 extends JPanel {
 
 	private JComboBox<String> methodList; // the selected binarization method
 	private JLabel statusLine; // to print some status text
-	private JSlider slider;
-	private static JCheckBox outlineBox = new JCheckBox("Outline");
-	private static int threshold = 128; // value for slider
 
 	public FloodFilling02() {
 		super(new BorderLayout(border, border));
@@ -205,10 +202,9 @@ public class FloodFilling02 extends JPanel {
 			stackQueue = "queue";
 			break;
 		case 2: // Sequentiell
-			Set<int[]> set = seqRegion(dstPixels);
-			for (int i = 0; i < set.size(); i++) {
-
-			}
+			Set<int[]> collisionSet = seqRegion(dstPixels);
+			Vector<Set<Integer>> colorRegions = resolveCollisions(collisionSet);
+			relabelPixture(dstPixels, colorRegions);
 			break;
 		case 3:
 			depthFirstEvolved(dstPixels);
@@ -237,8 +233,69 @@ public class FloodFilling02 extends JPanel {
 		memorySize = 0;
 	}
 
-	private Set seqRegion(int[] pixels) {
-		List<Integer> colorList = new ArrayList<Integer>();
+	private void relabelPixture(int[] pixels, Vector<Set<Integer>> colorRegions) {
+		for (int i = 0; i < pixels.length; i++) {
+			if (pixels[i] != WHITE) {
+				Set<Integer> set = new HashSet<Integer>();
+				for (Set<Integer> s : colorRegions) {
+					for (int j : s) {
+						if (j == pixels[i]) {
+							set = s;
+							break;
+						}
+					}
+				}
+				int min = 0;
+				for (int j : set) {
+					min = j;
+					if (min > j)
+						min = j;
+				}
+				pixels[i] = min;
+			}
+		}
+
+	}
+
+	private Vector<Set<Integer>> resolveCollisions(Set<int[]> collisionSet) {
+		Vector<Set<Integer>> parts = new Vector<Set<Integer>>();
+		for (int i : colorList) {
+			Set<Integer> toAdd = new HashSet<Integer>();
+			toAdd.add(i);
+			parts.add(toAdd);
+		}
+		System.out.println(parts.size());
+		System.out.println(collisionSet.size());
+
+		for (int[] i : collisionSet) {
+			int a = i[0];
+			int b = i[1];
+			int aSet = -1;
+			int bSet = -1;
+			for (int j = 0; j < parts.size(); j++) { //Set<Integer> j : parts) {
+				for (int k : parts.get(j)) {
+					if (k == a)
+						aSet = j;
+					if (k == b)
+						bSet = j;
+				}
+				if (aSet != -1 && bSet != -1 && aSet != bSet) {
+					parts.get(aSet).addAll(parts.get(bSet));
+					parts.get(bSet).clear();
+					break;
+				}
+			}
+		}
+		for (Set<Integer> j : parts) {
+			System.out.println("---");
+			for (int i : j) {
+				System.out.print(i + " ");
+			}
+		}
+		return parts;
+	}
+
+	private Set<int[]> seqRegion(int[] pixels) {
 		boolean[] visited = new boolean[pixels.length];
 		int rgb = Utils.getRandomColor();
 		colorList.add(rgb);
@@ -246,42 +303,33 @@ public class FloodFilling02 extends JPanel {
 		for (int i = 0; i < srcView.getImgHeight(); i++) {
 			for (int j = 0; j < srcView.getImgWidth(); j++) {
 				int currentPos = Utils.pixelPosSafe(j, i, srcView.getImgWidth(), srcView.getImgHeight());
-				//visited[currentPos] = true;
 				if (pixels[currentPos] == BLACK) {
+					//visited[currentPos] = true;
 					List<Integer> neighbourhood = getNeighboursInPicture(pixels, currentPos, 9, visited);
-					int count = 0;
 					int countColored = 0;
 					for (int k : neighbourhood)
-						if (pixels[k] != WHITE) {
-							count++;
-							if (pixels[k] != BLACK)
-								countColored++;
-						}
-					if (count == 0) {
+						if (pixels[k] != BLACK)
+							countColored++;
+					if (countColored == 0) {
 						pixels[currentPos] = rgb;
 						rgb = Utils.getRandomColor();
 						colorList.add(rgb);
-
-					} else if (countColored == 0) {
-						pixels[currentPos] = rgb;
 					} else if (countColored == 1) {
-						int neighborPixel = 0;
 						for (int k : neighbourhood)
-							if (pixels[k] != WHITE)
-								if (pixels[k] != BLACK)
-									neighborPixel = pixels[k];
-						pixels[currentPos] = neighborPixel;
+							if (pixels[k] != BLACK)
+								pixels[currentPos] = pixels[k];
 					} else if (countColored > 1) {
 						for (int k : neighbourhood)
-							if (pixels[k] != WHITE)
-								if (pixels[k] != BLACK)
-									rgb = pixels[k];
-						for (int k : neighbourhood)
-							if (pixels[k] != WHITE)
-								if (pixels[k] != BLACK && pixels[k] != rgb) {
-									int[] colorNeighbor = { rgb, pixels[k] };
-									set.add(colorNeighbor);
-								}
+							if (pixels[k] != BLACK) {
+								pixels[currentPos] = pixels[k];
+								break;
+							}
+						for (int k : neighbourhood) {
+							if (pixels[k] != BLACK && pixels[k] != rgb) {
+								int[] colorNeighbor = { pixels[currentPos], pixels[k] };
+								set.add(colorNeighbor);
+							}
+						}
 					}
 
 				}
@@ -365,11 +413,11 @@ public class FloodFilling02 extends JPanel {
 				&& currentPos < (srcView.getImgHeight() * srcView.getImgWidth())) {
 			pixels[currentPos] = rgb;
 			visited[currentPos] = true;
-			int[] neighbourhood = getNeighbours(pixels, currentPos, 9);
-			for (int j = 0; j < neighbourhood.length; j++) {
-				if (neighbourhood[j] != 0 && visited[neighbourhood[j]] == false) {
-					visited[neighbourhood[j]] = true;
-					stack.push(getPixelPos(neighbourhood[j], srcView.getImgWidth()));
+			List<Integer> neighbourhood = getNeighbours(pixels, currentPos, 9);
+			for (int j = 0; j < neighbourhood.size(); j++) {
+				if (neighbourhood.get(j) != 0 && visited[neighbourhood.get(j)] == false) {
+					visited[neighbourhood.get(j)] = true;
+					stack.push(getPixelPos(neighbourhood.get(j), srcView.getImgWidth()));
 				}
 			}
 		}
@@ -397,11 +445,10 @@ public class FloodFilling02 extends JPanel {
 			memorySize = stack.size();
 	}
 
-	private int[] getNeighbours(int[] pixels, int pixelPos, int kernelSize) {
+	private ArrayList<Integer> getNeighbours(int[] pixels, int pixelPos, int kernelSize) {
 		int amountNeighbours = kernelSize - 1;
-		int[] neighbours = new int[kernelSize];
+		ArrayList<Integer> neighbours = new ArrayList<Integer>();
 		int r = (int) ((Math.sqrt(amountNeighbours)) / 2);
-		int neighbourcount = 0;
 		int[] xY = getPixelPos(pixelPos, srcView.getImgWidth());
 		int x = xY[0];
 		int y = xY[1];
@@ -410,9 +457,8 @@ public class FloodFilling02 extends JPanel {
 				int currWidth = x + i;
 				int currHeight = y + j;
 				if (i != currWidth && j != currHeight) {
-					neighbours[neighbourcount] = Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
-							srcView.getImgHeight());
-					neighbourcount++;
+					neighbours.add(
+							Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(), srcView.getImgHeight()));
 				}
 			}
 		}
@@ -421,7 +467,6 @@ public class FloodFilling02 extends JPanel {
 
 	private List<Integer> getNeighboursInPicture(int[] pixels, int pixelPos, int kernelSize, boolean[] visited) {
 		int amountNeighbours = kernelSize - 1;
-		//int[] neighbours = new int[kernelSize];
 		List<Integer> neighbours = new ArrayList<Integer>();
 		int r = (int) ((Math.sqrt(amountNeighbours)) / 2);
 		int[] xY = getPixelPos(pixelPos, srcView.getImgWidth());
@@ -468,11 +513,11 @@ public class FloodFilling02 extends JPanel {
 				&& currentPos < (srcView.getImgHeight() * srcView.getImgWidth())) {
 			pixels[currentPos] = rgb;
 			visited[currentPos] = true;
-			int[] neighbourhood = getNeighbours(pixels, currentPos, 9);
-			for (int j = 0; j < neighbourhood.length; j++) {
-				if (neighbourhood[j] != 0 && visited[neighbourhood[j]] == false) {
-					visited[neighbourhood[j]] = true;
-					queue.offer(getPixelPos(neighbourhood[j], srcView.getImgWidth()));
+			List<Integer> neighbourhood = getNeighbours(pixels, currentPos, 9);
+			for (int j = 0; j < neighbourhood.size(); j++) {
+				if (neighbourhood.get(j) != 0 && visited[neighbourhood.get(j)] == false) {
+					visited[neighbourhood.get(j)] = true;
+					queue.offer(getPixelPos(neighbourhood.get(j), srcView.getImgWidth()));
 				}
 			}
 		}
@@ -485,7 +530,6 @@ public class FloodFilling02 extends JPanel {
 		int[] xY = new int[2];
 		xY[0] = pixelPos % width; // x
 		xY[1] = pixelPos / width; // y
-		System.out.println(xY[0] + "+" + xY[1]);
 		return xY;
 	}
 
