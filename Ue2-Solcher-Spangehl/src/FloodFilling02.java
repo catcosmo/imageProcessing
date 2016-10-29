@@ -43,7 +43,7 @@ public class FloodFilling02 extends JPanel {
 	private static final File openPath = new File(".");
 	private static final String title = "Binarisierung";
 	private static final String author = "Spangehl";
-	private static final String initalOpen = "tools1.png";
+	private static final String initalOpen = "sample.png";
 	private static int memorySize = 0;
 
 	static final int TH_MIN = 0;
@@ -202,6 +202,7 @@ public class FloodFilling02 extends JPanel {
 			stackQueue = "queue";
 			break;
 		case 2: // Sequentiell
+			colorList.clear();
 			Set<int[]> collisionSet = seqRegion(dstPixels);
 			Vector<Set<Integer>> colorRegions = resolveCollisions(collisionSet);
 			relabelPixture(dstPixels, colorRegions);
@@ -227,9 +228,10 @@ public class FloodFilling02 extends JPanel {
 		frame.pack();
 
 		String text = message + " in " + time + " ms";
-
 		if (memorySize > 0)
 			statusLine.setText(text + ". The maximum size of the " + stackQueue + " was " + memorySize + ".");
+		else
+			statusLine.setText(text);
 		memorySize = 0;
 	}
 
@@ -268,6 +270,7 @@ public class FloodFilling02 extends JPanel {
 		System.out.println(collisionSet.size());
 
 		for (int[] i : collisionSet) {
+
 			int a = i[0];
 			int b = i[1];
 			int aSet = -1;
@@ -286,12 +289,6 @@ public class FloodFilling02 extends JPanel {
 				}
 			}
 		}
-		for (Set<Integer> j : parts) {
-			System.out.println("---");
-			for (int i : j) {
-				System.out.print(i + " ");
-			}
-		}
 		return parts;
 	}
 
@@ -300,6 +297,8 @@ public class FloodFilling02 extends JPanel {
 		int rgb = Utils.getRandomColor();
 		colorList.add(rgb);
 		Set<int[]> set = new HashSet<int[]>();
+		System.out.println("Height:" + srcView.getHeight());
+		System.out.println("ImgHeight:" + srcView.getImgHeight());
 		for (int i = 0; i < srcView.getImgHeight(); i++) {
 			for (int j = 0; j < srcView.getImgWidth(); j++) {
 				int currentPos = Utils.pixelPosSafe(j, i, srcView.getImgWidth(), srcView.getImgHeight());
@@ -325,7 +324,7 @@ public class FloodFilling02 extends JPanel {
 								break;
 							}
 						for (int k : neighbourhood) {
-							if (pixels[k] != BLACK && pixels[k] != rgb) {
+							if (pixels[k] != BLACK && pixels[k] != pixels[currentPos]) {
 								int[] colorNeighbor = { pixels[currentPos], pixels[k] };
 								set.add(colorNeighbor);
 							}
@@ -477,7 +476,7 @@ public class FloodFilling02 extends JPanel {
 				int currWidth = x + i;
 				int currHeight = y + j;
 				if (currWidth >= 0 && currHeight >= 0 && !(currWidth == x && currHeight == y)
-						&& currWidth < srcView.getWidth() && currHeight < srcView.getHeight()) {
+						&& currWidth < srcView.getImgWidth() && currHeight < srcView.getImgHeight()) {
 					int thisPixelPos = Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
 							srcView.getImgHeight());
 					if (pixels[thisPixelPos] != WHITE && visited[thisPixelPos] == false) {
