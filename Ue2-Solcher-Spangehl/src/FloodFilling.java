@@ -4,7 +4,6 @@
 // Date: 2014-10-02
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -14,24 +13,24 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Stack;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.Random;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.text.html.HTMLDocument.Iterator;
 
 public class FloodFilling extends JPanel {
 
@@ -44,19 +43,15 @@ public class FloodFilling extends JPanel {
 	private static final File openPath = new File(".");
 	private static final String title = "Binarisierung";
 	private static final String author = "Spangehl";
-	private static final String initalOpen = "tools1.png";
-	private static final Stack<Integer> stack = new Stack<Integer>();
-	private static final Queue queue = new LinkedList();
-	private static final Random rand = new Random();
-	private static final float r = rand.nextFloat();
-	private static final float g = rand.nextFloat();
-	private static final float b = rand.nextFloat();
+	private static final String initalOpen = "sample.png";
+	private static int memorySize = 0;
 
 	static final int TH_MIN = 0;
 	static final int TH_MAX = 255;
 	static final int TH_INIT = 128;
 	private int[] histogram = new int[256];
 	private int[] originalPic;
+	private List<Integer> colorList = new ArrayList<Integer>();
 
 	private static JFrame frame;
 
@@ -65,9 +60,6 @@ public class FloodFilling extends JPanel {
 
 	private JComboBox<String> methodList; // the selected binarization method
 	private JLabel statusLine; // to print some status text
-	private JSlider slider;
-	private static JCheckBox outlineBox = new JCheckBox("Outline");
-	private static int threshold = 128; // value for slider
 
 	public FloodFilling() {
 		super(new BorderLayout(border, border));
@@ -99,7 +91,8 @@ public class FloodFilling extends JPanel {
 
 		// selector for the binarization method
 		JLabel methodText = new JLabel("Methode:");
-		String[] methodNames = { "Depth First", "Breadth First", "Sequentiell" };
+		String[] methodNames = { "Depth First", "Breadth First", "Sequentiell", "Depth First Evolved",
+				"Breadth First Evolved" };
 
 		methodList = new JComboBox<String>(methodNames);
 		methodList.setSelectedIndex(0); // set initial method
@@ -111,7 +104,6 @@ public class FloodFilling extends JPanel {
 
 		// some status text
 		statusLine = new JLabel("Wir suchen nach Bildregionen!");
-
 
 		// arrange all controls
 		JPanel controls = new JPanel(new GridBagLayout());
@@ -128,15 +120,11 @@ public class FloodFilling extends JPanel {
 		add(controls, BorderLayout.NORTH);
 		add(images, BorderLayout.CENTER);
 		add(statusLine, BorderLayout.SOUTH);
+		frame.setSize(frame.getWidth() + 20, frame.getHeight());
 
 		setBorder(BorderFactory.createEmptyBorder(border, border, border, border));
 
 	}
-
-
-
-
-
 
 	protected void reverse() {
 		dstView.setPixels(originalPic, srcView.getImgWidth(), srcView.getImgHeight());
@@ -175,7 +163,7 @@ public class FloodFilling extends JPanel {
 		frame.setVisible(true);
 	}
 
-	/*public static void main(String[] args) {
+	public static void main(String[] args) {
 		// Schedule a job for the event-dispatching thread:
 		// creating and showing this application's GUI.
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -183,7 +171,7 @@ public class FloodFilling extends JPanel {
 				createAndShowGUI();
 			}
 		});
-	}*/
+	}
 
 	protected void floodImage() {
 
@@ -198,26 +186,36 @@ public class FloodFilling extends JPanel {
 		int dstPixels[] = java.util.Arrays.copyOf(srcPixels, srcPixels.length);
 
 		String message = "Auffinden von Bildregionen mit \"" + methodName + "\"";
-
+		binarize(dstPixels, isoData(dstPixels, 128));
 		statusLine.setText(message);
 
 		long startTime = System.currentTimeMillis();
-
+		String stackQueue = "";
 		switch (methodList.getSelectedIndex()) {
 		case 0: // DepthFirst
-			threshold = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-			threshold = isoData(srcPixels, threshold);
-			binarize(dstPixels, threshold);
+
 			depthFirst(dstPixels);
+			stackQueue = "stack";
 			break;
 		case 1: // BreadthFirst
-			threshold = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-			threshold = isoData(srcPixels, threshold);
-			binarize(dstPixels, threshold);
 			breadthFirst(dstPixels);
+			stackQueue = "queue";
 			break;
-		case 2: //Sequentiell
-			seqRegion();
+		case 2: // Sequentiell
+			colorList.clear();
+			Set<int[]> collisionSet = seqRegion(dstPixels);
+			Vector<Set<Integer>> colorRegions = resolveCollisions(collisionSet);
+			relabelPixture(dstPixels, colorRegions);
+			break;
+		case 3:
+			depthFirstEvolved(dstPixels);
+			stackQueue = "stack";
+
+			break;
+		case 4:
+			breadthFirstEvolved(dstPixels);
+			stackQueue = "queue";
+
 			break;
 		}
 
@@ -229,130 +227,310 @@ public class FloodFilling extends JPanel {
 
 		frame.pack();
 
-		statusLine.setText(message + " in " + time + " ms");
+		String text = message + " in " + time + " ms";
+		if (memorySize > 0)
+			statusLine.setText(text + ". The maximum size of the " + stackQueue + " was " + memorySize + ".");
+		else
+			statusLine.setText(text);
+		memorySize = 0;
 	}
-	
-	private void seqRegion(int[] pixels){
-		for(int i=0; i < pixels.length; i++){
-			
+
+	private void relabelPixture(int[] pixels, Vector<Set<Integer>> colorRegions) {
+		for (int i = 0; i < pixels.length; i++) {
+			if (pixels[i] != WHITE) {
+				Set<Integer> set = new HashSet<Integer>();
+				for (Set<Integer> s : colorRegions) {
+					for (int j : s) {
+						if (j == pixels[i]) {
+							set = s;
+							break;
+						}
+					}
+				}
+				int min = 0;
+				for (int j : set) {
+					min = j;
+					if (min > j)
+						min = j;
+				}
+				pixels[i] = min;
+			}
+		}
+
+	}
+
+	private Vector<Set<Integer>> resolveCollisions(Set<int[]> collisionSet) {
+		Vector<Set<Integer>> parts = new Vector<Set<Integer>>();
+		for (int i : colorList) {
+			Set<Integer> toAdd = new HashSet<Integer>();
+			toAdd.add(i);
+			parts.add(toAdd);
+		}
+		System.out.println(parts.size());
+		System.out.println(collisionSet.size());
+
+		for (int[] i : collisionSet) {
+
+			int a = i[0];
+			int b = i[1];
+			int aSet = -1;
+			int bSet = -1;
+			for (int j = 0; j < parts.size(); j++) { //Set<Integer> j : parts) {
+				for (int k : parts.get(j)) {
+					if (k == a)
+						aSet = j;
+					if (k == b)
+						bSet = j;
+				}
+				if (aSet != -1 && bSet != -1 && aSet != bSet) {
+					parts.get(aSet).addAll(parts.get(bSet));
+					parts.get(bSet).clear();
+					break;
+				}
+			}
+		}
+		return parts;
+	}
+
+	private Set<int[]> seqRegion(int[] pixels) {
+		boolean[] visited = new boolean[pixels.length];
+		int rgb = Utils.getRandomColor();
+		colorList.add(rgb);
+		Set<int[]> set = new HashSet<int[]>();
+		System.out.println("Height:" + srcView.getHeight());
+		System.out.println("ImgHeight:" + srcView.getImgHeight());
+		for (int i = 0; i < srcView.getImgHeight(); i++) {
+			for (int j = 0; j < srcView.getImgWidth(); j++) {
+				int currentPos = Utils.pixelPosSafe(j, i, srcView.getImgWidth(), srcView.getImgHeight());
+				if (pixels[currentPos] == BLACK) {
+					//visited[currentPos] = true;
+					List<Integer> neighbourhood = getNeighboursInPicture(pixels, currentPos, 9, visited);
+					int countColored = 0;
+					for (int k : neighbourhood)
+						if (pixels[k] != BLACK)
+							countColored++;
+					if (countColored == 0) {
+						pixels[currentPos] = rgb;
+						rgb = Utils.getRandomColor();
+						colorList.add(rgb);
+					} else if (countColored == 1) {
+						for (int k : neighbourhood)
+							if (pixels[k] != BLACK)
+								pixels[currentPos] = pixels[k];
+					} else if (countColored > 1) {
+						for (int k : neighbourhood)
+							if (pixels[k] != BLACK) {
+								pixels[currentPos] = pixels[k];
+								break;
+							}
+						for (int k : neighbourhood) {
+							if (pixels[k] != BLACK && pixels[k] != pixels[currentPos]) {
+								int[] colorNeighbor = { pixels[currentPos], pixels[k] };
+								set.add(colorNeighbor);
+							}
+						}
+					}
+
+				}
+			}
+		}
+		return set;
+
+	}
+
+	private void breadthFirstEvolved(int[] pixels) {
+		boolean[] visited = new boolean[pixels.length];
+		for (int i = 0; i < pixels.length; i++) {
+			if (pixels[i] == BLACK) {
+				int rgb = Utils.getRandomColor();
+				Queue<int[]> queue = new LinkedList<int[]>();
+				if (!visited[i])
+					queue.add(getPixelPos(i, srcView.getImgWidth()));
+				visited[i] = true;
+				while (!queue.isEmpty()) {
+					pushQueueEvolved(pixels, rgb, visited, queue);
+				}
+			}
+		}
+	}
+
+	private void pushQueueEvolved(int[] pixels, int rgb, boolean[] visited, Queue<int[]> queue) {
+		int[] pos = queue.poll();
+		int currentPos = Utils.pixelPosSafe(pos[0], pos[1], srcView.getImgWidth(), srcView.getImgHeight());
+		if (pixels[currentPos] == BLACK && currentPos > 0
+				&& currentPos < (srcView.getImgHeight() * srcView.getImgWidth())) {
+			visited[currentPos] = true;
+			pixels[currentPos] = rgb;
+			List<Integer> neighbourhood = getNeighboursInPicture(pixels, currentPos, 9, visited);
+			for (int j = 0; j < neighbourhood.size(); j++) {
+				if (neighbourhood.get(j) != 0 && visited[neighbourhood.get(j)] == false) {
+					visited[neighbourhood.get(j)] = true;
+					queue.offer(getPixelPos(neighbourhood.get(j), srcView.getImgWidth()));
+				}
+			}
+		}
+		if (memorySize < queue.size())
+			memorySize = queue.size();
+	}
+
+	private void depthFirstEvolved(int[] pixels) {
+		boolean[] visited = new boolean[pixels.length];
+		for (int i = 0; i < pixels.length; i++) {
+			if (pixels[i] == BLACK) {
+				int rgb = Utils.getRandomColor();
+				Stack<int[]> stack = new Stack<int[]>();
+				if (!visited[i])
+					stack.push(getPixelPos(i, srcView.getImgWidth()));
+				visited[i] = true;
+				while (!stack.empty()) {
+					pushStackEvolved(pixels, rgb, visited, stack);
+				}
+			}
 		}
 	}
 
 	private void depthFirst(int[] pixels) {
-		for(int i=0; i < pixels.length; i++){
-			if(pixels[i] == BLACK){
-				//pixels[i] = (int) randomColour(r, g, b); //EINFÄRBEN mit label -> wichtig, geht aber nicht
-				pushStack(pixels, i);
-				while(!stack.empty()){
-					pushStack(pixels, (int)stack.pop());
+		boolean[] visited = new boolean[pixels.length];
+		for (int i = 0; i < pixels.length; i++) {
+			if (pixels[i] == BLACK) {
+				int rgb = Utils.getRandomColor();
+				Stack<int[]> stack = new Stack<int[]>();
+				if (!visited[i])
+					stack.push(getPixelPos(i, srcView.getImgWidth()));
+				visited[i] = true;
+				while (!stack.empty()) {
+					pushStack(pixels, rgb, visited, stack);
 				}
-
-			}
-
-		}
-	}
-
-	private void breadthFirst(int[] pixels) {
-		for(int i=0; i < pixels.length; i++){
-			if(pixels[i] == BLACK){
-				//pixels[i] = (int) randomColour(r, g, b); //EINFÄRBEN mit label -> wichtig, geht aber nicht
-				addQueue(pixels, i);
-				while(!queue.isEmpty()){
-					addQueue(pixels, (int)queue.remove());
-				}
-
 			}
 		}
-
 	}
 
-	private void seqRegion() {
-		// TODO Auto-generated method stub
-
-	}
-
-
-
-	private Object randomColour(float r, float g, float b) {
-		Color randomColor = new Color(r, g, b);
-		return randomColor;
-	}
-
-	//pusht die nachbarschaftspixel in den stack
-	private void pushStack(int[] pixels, int pixel){
-		int[] neighbourhood = getNeighbours(pixels, pixel, 8);
-		for(int j = 0; j<neighbourhood.length; j++){
-			stack.push(neighbourhood[j]);
-		}
-	}
-
-	//pusht die nachbarschaftspixel in die queue
-	private void addQueue(int[] pixels, int pixel){
-		int[] neighbourhood = getNeighbours(pixels, pixel, 8);
-		for(int j = 0; j<neighbourhood.length; j++){
-			queue.add(neighbourhood[j]);
-		}
-	}
-
-	/*
-	 * gibt die nachbarschafts-pixel als array zurück
-	 * aber nicht das zu bearbeitende pixel selbst
-	 * 
-	 */
-
-	private int[] getNeighbours(int[] pixels, int pixelPos, int amountNeighbours) {
-		int[] neighbours = new int[amountNeighbours];
-		int neighbourcount = 0;
-
-		int[] xY = getPixelPos(pixelPos, srcView.getImgWidth()); //gibt x, y koordinaten als array zurück
-		int r = (amountNeighbours) / 2;
-
-		int xStart = xY[0] - r;
-		int yStart = xY[1] - r;
-
-		int curPosX;
-		int curPosY;
-
-		for (int j = 0; j < amountNeighbours; j++) { // geht über die reihen (y)
-
-			curPosY = yStart + j;
-			// randbehandlung
-			if (curPosY < 0) {
-				curPosY = 0;
+	private void pushStack(int[] pixels, int rgb, boolean[] visited, Stack<int[]> stack) {
+		int[] pos = stack.pop();
+		int currentPos = Utils.pixelPosSafe(pos[0], pos[1], srcView.getImgWidth(), srcView.getImgHeight());
+		if (pixels[currentPos] == BLACK && currentPos > 0
+				&& currentPos < (srcView.getImgHeight() * srcView.getImgWidth())) {
+			pixels[currentPos] = rgb;
+			visited[currentPos] = true;
+			List<Integer> neighbourhood = getNeighbours(pixels, currentPos, 9);
+			for (int j = 0; j < neighbourhood.size(); j++) {
+				if (neighbourhood.get(j) != 0 && visited[neighbourhood.get(j)] == false) {
+					visited[neighbourhood.get(j)] = true;
+					stack.push(getPixelPos(neighbourhood.get(j), srcView.getImgWidth()));
+				}
 			}
-			if (curPosY >= srcView.getHeight()) {
-				curPosY = srcView.getHeight() - 1;
+		}
+		if (memorySize < stack.size())
+			memorySize = stack.size();
+	}
+
+	// pusht die nachbarschaftspixel in den stack
+	private void pushStackEvolved(int[] pixels, int rgb, boolean[] visited, Stack<int[]> stack) {
+		int[] pos = stack.pop();
+		int currentPos = Utils.pixelPosSafe(pos[0], pos[1], srcView.getImgWidth(), srcView.getImgHeight());
+		if (pixels[currentPos] == BLACK && currentPos > 0
+				&& currentPos < (srcView.getImgHeight() * srcView.getImgWidth())) {
+			visited[currentPos] = true;
+			pixels[currentPos] = rgb;
+			List<Integer> neighbourhood = getNeighboursInPicture(pixels, currentPos, 9, visited);
+			for (int j = 0; j < neighbourhood.size(); j++) {
+				if (neighbourhood.get(j) != 0 && visited[neighbourhood.get(j)] == false) {
+					visited[neighbourhood.get(j)] = true;
+					stack.push(getPixelPos(neighbourhood.get(j), srcView.getImgWidth()));
+				}
 			}
+		}
+		if (memorySize < stack.size())
+			memorySize = stack.size();
+	}
 
-			for (int i = 0; i < amountNeighbours; i++) { // geht über die zeilen (x)
-				curPosX = xStart + i;
-				// randbehandlung
-				if (curPosX < 0) {
-					curPosX = 0;
+	private ArrayList<Integer> getNeighbours(int[] pixels, int pixelPos, int kernelSize) {
+		int amountNeighbours = kernelSize - 1;
+		ArrayList<Integer> neighbours = new ArrayList<Integer>();
+		int r = (int) ((Math.sqrt(amountNeighbours)) / 2);
+		int[] xY = getPixelPos(pixelPos, srcView.getImgWidth());
+		int x = xY[0];
+		int y = xY[1];
+		for (int j = -r; j <= r; j++) {
+			for (int i = -r; i <= r; i++) {
+				int currWidth = x + i;
+				int currHeight = y + j;
+				if (i != currWidth && j != currHeight) {
+					neighbours.add(
+							Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(), srcView.getImgHeight()));
 				}
-				if (curPosX >= srcView.getImgWidth()) {
-					curPosX = srcView.getImgWidth() - 1;
-				}
-				//x, y koordinaten in eindimensionale koordinate zurückverwandeln und diese im neighbour array zwischenspeichern
-				if(xY[0] != i && xY[1] != j){
-					neighbours[neighbourcount] = Utils.pixelPosSafe(i, j, srcView.getImgWidth(), srcView.getImgHeight());
-					neighbourcount++;
-				}
-
 			}
 		}
 		return neighbours;
 	}
 
-	//berechnet x und y koordinaten for i in eindimensionalem array
-	private int[] getPixelPos(int pixelPos, int width){
-		int[] xY = new int[2];
-		xY[0] = pixelPos % width; //x
-		xY[1] = pixelPos / width; //y
-		System.out.println(xY[0] + '&' +  xY[1]); 
-		return xY;
+	private List<Integer> getNeighboursInPicture(int[] pixels, int pixelPos, int kernelSize, boolean[] visited) {
+		int amountNeighbours = kernelSize - 1;
+		List<Integer> neighbours = new ArrayList<Integer>();
+		int r = (int) ((Math.sqrt(amountNeighbours)) / 2);
+		int[] xY = getPixelPos(pixelPos, srcView.getImgWidth());
+		int x = xY[0];
+		int y = xY[1];
+		for (int j = -r; j <= r; j++) {
+			for (int i = -r; i <= r; i++) {
+				int currWidth = x + i;
+				int currHeight = y + j;
+				if (currWidth >= 0 && currHeight >= 0 && !(currWidth == x && currHeight == y)
+						&& currWidth < srcView.getImgWidth() && currHeight < srcView.getImgHeight()) {
+					int thisPixelPos = Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
+							srcView.getImgHeight());
+					if (pixels[thisPixelPos] != WHITE && visited[thisPixelPos] == false) {
+						neighbours.add(Utils.pixelPosSafe(currWidth, currHeight, srcView.getImgWidth(),
+								srcView.getImgHeight()));
+					}
+				}
+			}
+		}
+		return neighbours;
 	}
 
+	private void breadthFirst(int[] pixels) {
+		boolean[] visited = new boolean[pixels.length];
+		for (int i = 0; i < pixels.length; i++) {
+			if (pixels[i] == BLACK) {
+				int rgb = Utils.getRandomColor();
+				Queue<int[]> queue = new LinkedList<int[]>();
+				if (!visited[i])
+					queue.add(getPixelPos(i, srcView.getImgWidth()));
+				visited[i] = true;
+				while (!queue.isEmpty()) {
+					pushQueue(pixels, rgb, visited, queue);
+				}
+			}
+		}
+	}
+
+	private void pushQueue(int[] pixels, int rgb, boolean[] visited, Queue<int[]> queue) {
+		int[] pos = queue.poll();
+		int currentPos = Utils.pixelPosSafe(pos[0], pos[1], srcView.getImgWidth(), srcView.getImgHeight());
+		if (pixels[currentPos] == BLACK && currentPos > 0
+				&& currentPos < (srcView.getImgHeight() * srcView.getImgWidth())) {
+			pixels[currentPos] = rgb;
+			visited[currentPos] = true;
+			List<Integer> neighbourhood = getNeighbours(pixels, currentPos, 9);
+			for (int j = 0; j < neighbourhood.size(); j++) {
+				if (neighbourhood.get(j) != 0 && visited[neighbourhood.get(j)] == false) {
+					visited[neighbourhood.get(j)] = true;
+					queue.offer(getPixelPos(neighbourhood.get(j), srcView.getImgWidth()));
+				}
+			}
+		}
+		if (memorySize < queue.size())
+			memorySize = queue.size();
+	}
+
+	// berechnet x und y koordinaten for i in eindimensionalem array
+	private int[] getPixelPos(int pixelPos, int width) {
+		int[] xY = new int[2];
+		xY[0] = pixelPos % width; // x
+		xY[1] = pixelPos / width; // y
+		return xY;
+	}
 
 	private int isoData(int[] pixels, int initialThreshold) {
 		createHist(pixels);
@@ -391,12 +569,5 @@ public class FloodFilling extends JPanel {
 			pixels[i] = gray < treshold ? 0xff000000 : 0xffffffff;
 		}
 	}
-
-
-
-
-
-
-
 
 }

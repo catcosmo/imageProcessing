@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/Ue2-Solcher-Spangehl/src/FloodFilling02.java"/>
+<listEntry value="/Ue2-Solcher-Spangehl/src/FloodFilling.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
 </listAttribute>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="FloodFilling02"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="FloodFilling"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Ue2-Solcher-Spangehl"/>
 </launchConfiguration>
