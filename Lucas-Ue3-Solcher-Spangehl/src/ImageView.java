@@ -1,4 +1,3 @@
-
 // Copyright (C) 2010 by Klaus Jung
 // All rights reserved.
 // Date: 2010-03-15
@@ -35,13 +34,12 @@ public class ImageView extends JScrollPane {
 	private static double zoom = 2.0;
 	private static List<ArrayList<Line>> allLines = new ArrayList<ArrayList<Line>>();
 
-	private static boolean linesOn;
-
 	int pixels[] = null; // pixel array in ARGB format
 
 	public ImageView(int width, int height) {
 		// construct empty image of given size
-		BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		BufferedImage bi = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_RGB);
 
 		init(bi, true);
 	}
@@ -80,9 +78,11 @@ public class ImageView extends JScrollPane {
 		if (width == getImgWidth() && height == getImgHeight())
 			return;
 
-		screen.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		screen.image = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_RGB);
 		pixels = new int[getImgWidth() * getImgHeight()];
-		screen.image.getRGB(0, 0, getImgWidth(), getImgHeight(), pixels, 0, getImgWidth());
+		screen.image.getRGB(0, 0, getImgWidth(), getImgHeight(), pixels, 0,
+				getImgWidth());
 
 		Dimension size = new Dimension(maxSize);
 		if (size.width - borderX > width)
@@ -99,7 +99,8 @@ public class ImageView extends JScrollPane {
 		// get reference to internal pixels array
 		if (pixels == null) {
 			pixels = new int[getImgWidth() * getImgHeight()];
-			screen.image.getRGB(0, 0, getImgWidth(), getImgHeight(), pixels, 0, getImgWidth());
+			screen.image.getRGB(0, 0, getImgWidth(), getImgHeight(), pixels, 0,
+					getImgWidth());
 		}
 		return pixels;
 	}
@@ -123,7 +124,8 @@ public class ImageView extends JScrollPane {
 
 		if (width != getImgWidth() || height != getImgHeight()) {
 			// image dimension changed
-			screen.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+			screen.image = new BufferedImage(width, height,
+					BufferedImage.TYPE_INT_RGB);
 			pixels = null;
 		}
 
@@ -131,7 +133,8 @@ public class ImageView extends JScrollPane {
 
 		if (pixels != null && pix != pixels) {
 			// update internal pixels array
-			System.arraycopy(pix, 0, pixels, 0, Math.min(pix.length, pixels.length));
+			System.arraycopy(pix, 0, pixels, 0,
+					Math.min(pix.length, pixels.length));
 		}
 
 		Dimension size = new Dimension(maxSize);
@@ -198,7 +201,8 @@ public class ImageView extends JScrollPane {
 			bi = ImageIO.read(file);
 			success = true;
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Bild konnte nicht geladen werden.", "Fehler",
+			JOptionPane.showMessageDialog(this,
+					"Bild konnte nicht geladen werden.", "Fehler",
 					JOptionPane.ERROR_MESSAGE);
 			bi = new BufferedImage(200, 150, BufferedImage.TYPE_INT_RGB);
 		}
@@ -206,18 +210,21 @@ public class ImageView extends JScrollPane {
 		init(bi, !success);
 
 		if (!success)
-			printText(5, getImgHeight() / 2, "Bild konnte nicht geladen werden.");
+			printText(5, getImgHeight() / 2,
+					"Bild konnte nicht geladen werden.");
 	}
 
 	public void saveImage(String fileName) {
 		try {
 			File file = new File(fileName);
 			String ext = (fileName.lastIndexOf(".") == -1) ? ""
-					: fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+					: fileName.substring(fileName.lastIndexOf(".") + 1,
+							fileName.length());
 			if (!ImageIO.write(screen.image, ext, file))
 				throw new Exception("Image save failed");
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Bild konnte nicht geschrieben werden.", "Fehler",
+			JOptionPane.showMessageDialog(this,
+					"Bild konnte nicht geschrieben werden.", "Fehler",
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -241,7 +248,8 @@ public class ImageView extends JScrollPane {
 
 	private void updatePixels() {
 		if (pixels != null)
-			screen.image.getRGB(0, 0, getImgWidth(), getImgHeight(), pixels, 0, getImgWidth());
+			screen.image.getRGB(0, 0, getImgWidth(), getImgHeight(), pixels, 0,
+					getImgWidth());
 	}
 
 	class ImageScreen extends JComponent {
@@ -262,8 +270,10 @@ public class ImageView extends JScrollPane {
 
 				// limit image view magnification
 				if (maxViewMagnification > 0.0) {
-					int maxWidth = (int) (image.getWidth() * maxViewMagnification + 0.5);
-					int maxHeight = (int) (image.getHeight() * maxViewMagnification + 0.5);
+					int maxWidth = (int) (image.getWidth()
+							* maxViewMagnification + 0.5);
+					int maxHeight = (int) (image.getHeight()
+							* maxViewMagnification + 0.5);
 
 					if (r.width > maxWidth)
 						r.width = maxWidth;
@@ -290,7 +300,8 @@ public class ImageView extends JScrollPane {
 					if (centered)
 						offsetY = (getBounds().height - r.height) / 2;
 					g.fillRect(0, 0, getBounds().width, offsetY);
-					g.fillRect(0, r.height + offsetY, getBounds().width, getBounds().height - r.height - offsetY);
+					g.fillRect(0, r.height + offsetY, getBounds().width,
+							getBounds().height - r.height - offsetY);
 				}
 
 				if (r.width < getBounds().width) {
@@ -298,7 +309,8 @@ public class ImageView extends JScrollPane {
 					if (centered)
 						offsetX = (getBounds().width - r.width) / 2;
 					g.fillRect(0, offsetY, offsetX, r.height);
-					g.fillRect(r.width + offsetX, offsetY, getBounds().width - r.width - offsetX, r.height);
+					g.fillRect(r.width + offsetX, offsetY, getBounds().width
+							- r.width - offsetX, r.height);
 				}
 
 				// draw image
@@ -309,22 +321,29 @@ public class ImageView extends JScrollPane {
 					g.setColor(SystemColor.LIGHT_GRAY);
 
 					for (double x = 0; x < w; x += zoom) {
-						g.drawLine((int) x + offsetX, 0 + offsetY, (int) x + offsetX, h + offsetY);
+						g.drawLine((int) x + offsetX, 0 + offsetY, (int) x
+								+ offsetX, h + offsetY);
 					}
 					for (double x = 0; x < h; x += zoom) {
-						g.drawLine(0 + offsetX, (int) x + offsetY, w + offsetX, (int) x + offsetY);
+						g.drawLine(0 + offsetX, (int) x + offsetY, w + offsetX,
+								(int) x + offsetY);
 					}
 				}
 
-				//g.setColor(SystemColor.RED);
+				// g.setColor(SystemColor.RED);
 				Graphics2D g2 = (Graphics2D) g;
 
 				g2.setStroke(new BasicStroke(1));
 				for (ArrayList<Line> l : allLines) {
 					for (Line line : l) {
 						g.setColor(line.getC());
-						g.drawLine((int) (line.getX1() * zoom + offsetX), (int) (line.getY1() * zoom + offsetY),
-								(int) (line.getX2() * zoom + offsetX), (int) (line.getY2() * zoom + offsetY));
+						double x1 = (line.getX1() * zoom + offsetX);
+						double y1 = (line.getY1() * zoom + offsetY);
+						double x2 = (line.getX2() * zoom + offsetX);
+						double y2 = (line.getY2() * zoom + offsetY);
+
+						g.drawLine((int) (x1), (int) (y1), (int) (x2),
+								(int) (y2));
 					}
 				}
 
@@ -333,7 +352,8 @@ public class ImageView extends JScrollPane {
 
 		public Dimension getPreferredSize() {
 			if (image != null)
-				return new Dimension((int) zoom * image.getWidth(), (int) zoom * image.getHeight());
+				return new Dimension((int) zoom * image.getWidth(), (int) zoom
+						* image.getHeight());
 			else
 				return new Dimension(100, 60);
 		}

@@ -1,4 +1,3 @@
-
 // Copyright (C) 2014 by Klaus Jung
 // All rights reserved.
 // Date: 2014-10-02
@@ -94,7 +93,8 @@ public class PathFinding extends JPanel {
 
 		// selector for the binarization method
 		JLabel methodText = new JLabel("Methode:");
-		String[] methodNames = { "Schwellwert Slider", "Iso-Data-Algorithmus", "Outline", "Breadth-First" };
+		String[] methodNames = { "Schwellwert Slider", "Iso-Data-Algorithmus",
+				"Outline", "Breadth-First" };
 
 		methodList = new JComboBox<String>(methodNames);
 		methodList.setSelectedIndex(0); // set initial method
@@ -109,13 +109,14 @@ public class PathFinding extends JPanel {
 
 		// slider for threshold
 		final int sliderGranularity = 100;
-		slider = new JSlider(JSlider.HORIZONTAL, TH_MIN * sliderGranularity, TH_MAX * sliderGranularity,
-				TH_INIT * sliderGranularity);
+		slider = new JSlider(JSlider.HORIZONTAL, TH_MIN * sliderGranularity,
+				TH_MAX * sliderGranularity, TH_INIT * sliderGranularity);
 		slider.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				JSlider source = (JSlider) e.getSource();
-				double val = (double) ((JSlider) e.getSource()).getValue() / sliderGranularity;
+				double val = (double) ((JSlider) e.getSource()).getValue()
+						/ sliderGranularity;
 				binarizeImage();
 				ImageView.setZoom(val);
 			}
@@ -132,7 +133,8 @@ public class PathFinding extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int srcPixels[] = srcView.getPixels();
-				final int dstPixels[] = java.util.Arrays.copyOf(srcPixels, srcPixels.length);
+				final int dstPixels[] = java.util.Arrays.copyOf(srcPixels,
+						srcPixels.length);
 				List<Path> pathList = path(dstPixels);
 				createLines(pathList);
 
@@ -156,7 +158,8 @@ public class PathFinding extends JPanel {
 		add(images, BorderLayout.CENTER);
 		add(statusLine, BorderLayout.SOUTH);
 
-		setBorder(BorderFactory.createEmptyBorder(border, border, border, border));
+		setBorder(BorderFactory.createEmptyBorder(border, border, border,
+				border));
 
 		// perform the initial binarization
 		binarizeImage();
@@ -168,15 +171,16 @@ public class PathFinding extends JPanel {
 		Color c = c1;
 		List<ArrayList<Line>> allLines = new ArrayList<ArrayList<Line>>();
 		for (Path p : pathList) {
+			if (p.isOuter())
+				c = c1;
+			else
+				c = c2;
 			ArrayList<Line> lineList = new ArrayList<Line>();
 			for (Edge e : p.getEdges()) {
-				Line line = new Line(e.getV1().getX(), e.getV2().getX(), e.getV1().getY(), e.getV2().getY(), c);
+				Line line = new Line(e.getV1().getX(), e.getV2().getX(), e
+						.getV1().getY(), e.getV2().getY(), c);
 				lineList.add(line);
 			}
-			if (c.equals(c1))
-				c = c2;
-			else
-				c = c1;
 			allLines.add(lineList);
 		}
 		dstView.setLines(allLines);
@@ -224,15 +228,16 @@ public class PathFinding extends JPanel {
 	}
 
 	protected void reverse() {
-		dstView.setPixels(originalPic, srcView.getImgWidth(), srcView.getImgHeight());
+		dstView.setPixels(originalPic, srcView.getImgWidth(),
+				srcView.getImgHeight());
 		frame.pack();
 
 	}
 
 	private File openFile() {
 		JFileChooser chooser = new JFileChooser();
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Images (*.jpg, *.png, *.gif)", "jpg", "png",
-				"gif");
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(
+				"Images (*.jpg, *.png, *.gif)", "jpg", "png", "gif");
 		chooser.setFileFilter(filter);
 		chooser.setCurrentDirectory(openPath);
 		int ret = chooser.showOpenDialog(this);
@@ -256,7 +261,8 @@ public class PathFinding extends JPanel {
 		frame.pack();
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 		Dimension screenSize = toolkit.getScreenSize();
-		frame.setLocation((screenSize.width - frame.getWidth()) / 2, (screenSize.height - frame.getHeight()) / 2);
+		frame.setLocation((screenSize.width - frame.getWidth()) / 2,
+				(screenSize.height - frame.getHeight()) / 2);
 		frame.setVisible(true);
 	}
 
@@ -308,27 +314,34 @@ public class PathFinding extends JPanel {
 		for (int i = 0; i < dstPixels.length; i++) {
 			if (dstPixels[i] == BLACK && visitedNormal[i] == false) {
 				Path path = findPath(i, dstPixels);
+				path.setOuter(true);
 				paths.add(path);
-				visitedNormal = findEnclosedPixels(dstPixels, path, visitedNormal);
-				//i = dstPixels.length;
+				visitedNormal = findEnclosedPixels(dstPixels, path,
+						visitedNormal);
+				// i = dstPixels.length;
 			}
 		}
 		for (int i = 0; i < dstPixels.length; i++) {
 			if (dstPixels[i] == BLACK) {
 				Path path = findPath(i, dstPixels);
 				paths.add(path);
-				visitedInverted = findEnclosedPixels(dstPixels, path, visitedInverted);
+				path.setOuter(false);
+				visitedInverted = findEnclosedPixels(dstPixels, path,
+						visitedInverted);
 				i = dstPixels.length;
 			}
 		}
 		return paths;
 	}
 
-	private boolean[] findEnclosedPixels(int[] dstPixels, Path path, boolean[] visited) {
+	private boolean[] findEnclosedPixels(int[] dstPixels, Path path,
+			boolean[] visited) {
 		GeneralPath gp = new GeneralPath();
-		gp.moveTo(path.getEdges().get(0).getV1().getX(), path.getEdges().get(0).getV1().getY());
+		gp.moveTo(path.getEdges().get(0).getV1().getX(), path.getEdges().get(0)
+				.getV1().getY());
 		for (int i = 0; i < path.getEdges().size(); i++) {
-			gp.lineTo(path.getEdges().get(i).getV2().getX(), path.getEdges().get(i).getV2().getY());
+			gp.lineTo(path.getEdges().get(i).getV2().getX(), path.getEdges()
+					.get(i).getV2().getY());
 		}
 		List<Integer> enclosedPixels = new ArrayList<Integer>();
 		for (int i = 0; i < dstPixels.length; i++) {
@@ -360,18 +373,20 @@ public class PathFinding extends JPanel {
 		path.addPixel(pixel);
 		Vertex v1 = new Vertex(pixel.getX(), pixel.getY());
 		Vertex v2 = new Vertex(pixel.getX(), pixel.getY() + 1);
-		//pixel.addVertex(new Vertex(pixel.getX(), pixel.getY()));
-		//pixel.addVertex(new Vertex(pixel.getX(), pixel.getY() + 1));
+		// pixel.addVertex(new Vertex(pixel.getX(), pixel.getY()));
+		// pixel.addVertex(new Vertex(pixel.getX(), pixel.getY() + 1));
 		Edge lastEdge = new Edge(v1, v2);
 		path.addEdge(lastEdge);
 		boolean stop = false;
-		//System.out.println("x: " + v1.getX() + ", y:" + v1.getY());
-		//System.out.println("x: " + v2.getX() + ", y:" + v2.getY());
-		//Vertex vertex = getVertex(edge.getDirection());
+		// System.out.println("x: " + v1.getX() + ", y:" + v1.getY());
+		// System.out.println("x: " + v2.getX() + ", y:" + v2.getY());
+		// Vertex vertex = getVertex(edge.getDirection());
 		while (!stop) {
 			lastEdge = path.getEdges().get(path.getEdges().size() - 1);
-			List<Pixel> pixels = getPossiblePixels(lastEdge.getDirection(), pixel, dstPixels);
-			String newDirection = decideDirection(lastEdge.getDirection(), pixels, pixel);
+			List<Pixel> pixels = getPossiblePixels(lastEdge.getDirection(),
+					pixel, dstPixels);
+			String newDirection = decideDirection(lastEdge.getDirection(),
+					pixels, pixel);
 			Vertex vertex = new Vertex(lastEdge, newDirection);
 			Edge newEdge = new Edge(lastEdge.getV2(), vertex);
 			pixel = new Pixel(lastEdge.getDirection(), newDirection, pixel);
@@ -379,16 +394,19 @@ public class PathFinding extends JPanel {
 				path.addEdge(newEdge);
 			else
 				stop = !stop;
-			System.out.println("x: " + vertex.getX() + ", y:" + vertex.getY());
+			// System.out.println("x: " + vertex.getX() + ", y:" +
+			// vertex.getY());
 		}
 		return path;
 	}
 
-	private String decideDirection(String lastDirection, List<Pixel> pixels, Pixel lastPixel) {
+	private String decideDirection(String lastDirection, List<Pixel> pixels,
+			Pixel lastPixel) {
 		String newDirection = "";
 		if (pixels.size() == 1) {
 			Pixel thisPixel = pixels.get(0);
-			if (lastPixel.getX() == thisPixel.getX() || lastPixel.getY() == thisPixel.getY()) {
+			if (lastPixel.getX() == thisPixel.getX()
+					|| lastPixel.getY() == thisPixel.getY()) {
 				newDirection = lastDirection;
 			} else {
 				if (lastDirection.equals("right")) {
@@ -425,7 +443,8 @@ public class PathFinding extends JPanel {
 		return newDirection;
 	}
 
-	private List<Pixel> getPossiblePixels(String direction, Pixel pixel, int[] dstPixels) {
+	private List<Pixel> getPossiblePixels(String direction, Pixel pixel,
+			int[] dstPixels) {
 		Pixel p1 = null;
 		Pixel p2 = null;
 		switch (direction) {
@@ -449,28 +468,28 @@ public class PathFinding extends JPanel {
 		List<Pixel> pixRet = new ArrayList<Pixel>();
 		boolean p1InBoundaries = false;
 		boolean p2InBoundaries = false;
-		if (p1.getX() > 0 && p1.getX() < srcView.getImgWidth() && p1.getY() > 0 && p1.getY() < srcView.getImgHeight())
+		if (p1.getX() > 0 && p1.getX() < srcView.getImgWidth() && p1.getY() > 0
+				&& p1.getY() < srcView.getImgHeight())
 			p1InBoundaries = true;
-		if (p2.getX() > 0 && p2.getX() < srcView.getImgWidth() && p2.getY() > 0 && p2.getY() < srcView.getImgHeight())
+		if (p2.getX() > 0 && p2.getX() < srcView.getImgWidth() && p2.getY() > 0
+				&& p2.getY() < srcView.getImgHeight())
 			p2InBoundaries = true;
-		if (p1InBoundaries && dstPixels[Utils.pixelPos(p1.getX(), p1.getY(), srcView.getImgWidth())] == BLACK) {
-			if (p2InBoundaries && dstPixels[Utils.pixelPos(p2.getX(), p2.getY(), srcView.getImgWidth())] == BLACK) {
+		if (p1InBoundaries
+				&& dstPixels[Utils.pixelPos(p1.getX(), p1.getY(),
+						srcView.getImgWidth())] == BLACK) {
+			if (p2InBoundaries
+					&& dstPixels[Utils.pixelPos(p2.getX(), p2.getY(),
+							srcView.getImgWidth())] == BLACK) {
 				pixRet.add(p1);
 				pixRet.add(p2);
 			} else
 				pixRet.add(p1);
-		} else if (p2InBoundaries && dstPixels[Utils.pixelPos(p2.getX(), p2.getY(), srcView.getImgWidth())] == BLACK)
+		} else if (p2InBoundaries
+				&& dstPixels[Utils.pixelPos(p2.getX(), p2.getY(),
+						srcView.getImgWidth())] == BLACK)
 			pixRet.add(p2);
 
 		return pixRet;
-	}
-
-	private void breadthFirst(int[] dstPixels) {
-		for (int i = 0; i < srcView.getWidth(); i++) {
-			for (int j = 0; j < srcView.getHeight(); j++)
-				// if(dstPixels[i * ])
-				doQueue(dstPixels, i, j, 2);
-		}
 	}
 
 	private void doQueue(int[] dstPixels, int x, int y, int label) {
@@ -478,7 +497,8 @@ public class PathFinding extends JPanel {
 		queue.add(x + y * srcView.getWidth());
 		while (!queue.isEmpty()) {
 			int point = queue.remove();
-			if (point > 0 && point < dstPixels.length - 1 && dstPixels[x] == Utils.ARGB_BLACK) {
+			if (point > 0 && point < dstPixels.length - 1
+					&& dstPixels[x] == Utils.ARGB_BLACK) {
 				dstPixels[x] = 2;
 				queue.add(x + 1 + y * srcView.getWidth());
 				queue.add(x + (y + 1) * srcView.getWidth());

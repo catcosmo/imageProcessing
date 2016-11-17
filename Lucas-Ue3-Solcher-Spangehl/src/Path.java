@@ -5,6 +5,7 @@ public class Path {
 
 	List<Pixel> pixels = new ArrayList<Pixel>();
 	List<Edge> edges = new ArrayList<Edge>();
+	private boolean outer;
 
 	public void addEdge(Edge edge) {
 		edges.add(edge);
@@ -37,6 +38,14 @@ public class Path {
 				return false;
 		}
 		return true;
+	}
+
+	public void setOuter(boolean b) {
+		outer = b;
+	}
+
+	public boolean isOuter() {
+		return outer;
 	}
 
 }
