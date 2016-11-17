@@ -201,6 +201,7 @@ public class Potrace extends JPanel {
 			break;
 
 		}
+		
 
 		long time = System.currentTimeMillis() - startTime;
 
@@ -217,6 +218,8 @@ public class Potrace extends JPanel {
 			statusLine.setText(text);
 		memorySize = 0;
 	}
+	
+	
 
 
 

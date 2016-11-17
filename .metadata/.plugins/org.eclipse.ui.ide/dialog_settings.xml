@@ -5,11 +5,11 @@
 		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
 		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
 		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/Users/krawallmietze/code/java/imageProcessing/Lucas-Ue3-Solcher-Spangehl"/>
 			<item value="/Users/krawallmietze/code/java/imageProcessing/Ue1-Spangehl"/>
 			<item value="/Users/krawallmietze/code/java/imageProcessing/Ue5_Spangehl_Dau"/>
 			<item value="/Users/krawallmietze/code/java/imageProcessing/Ue4_Spangehl_Dau"/>
 			<item value="/Users/krawallmietze/code/java/imageProcessing/Ue3_Spangehl_Dau"/>
-			<item value="/Users/krawallmietze/Downloads/Ue1-Spangehl"/>
 		</list>
 		<list key="WizardProjectsImportPage.STORE_ARCHIVES">
 			<item value=""/>
