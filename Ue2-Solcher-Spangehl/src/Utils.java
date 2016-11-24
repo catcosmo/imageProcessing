@@ -664,9 +664,9 @@ public class Utils {
 	
     @SuppressWarnings("unused") 
     public static int getRandomColor(){
-    	int r = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-        int g = ThreadLocalRandom.current().nextInt(1, 255 + 1);
-        int b = ThreadLocalRandom.current().nextInt(1, 255 + 1);
+    	int r = ThreadLocalRandom.current().nextInt(1, 255);
+        int g = ThreadLocalRandom.current().nextInt(1, 255);
+        int b = ThreadLocalRandom.current().nextInt(1, 255);
         int rgb = 65536 * r + 256 * g + b;
         return rgb; 	
     }

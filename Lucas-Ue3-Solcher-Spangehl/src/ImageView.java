@@ -350,6 +350,7 @@ public class ImageView extends JScrollPane {
 			}
 		}
 
+		//TODO: set min size
 		public Dimension getPreferredSize() {
 			if (image != null)
 				return new Dimension((int) zoom * image.getWidth(), (int) zoom
