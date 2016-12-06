@@ -264,6 +264,7 @@ public class ImageView extends JScrollPane {
 		}
 
 		public void paintComponent(Graphics g) {
+			getPreferredSize();
 
 			if (image != null) {
 				Rectangle r = this.getBounds();
@@ -350,12 +351,18 @@ public class ImageView extends JScrollPane {
 			}
 		}
 
-		//TODO: set min size
+		// TODO: set min size
 		public Dimension getPreferredSize() {
-			if (image != null)
-				return new Dimension((int) zoom * image.getWidth(), (int) zoom
-						* image.getHeight());
-			else
+			if (image != null) {
+				int i = image.getWidth();
+				int j = image.getHeight();
+				if (i <= 500 || j <= 500) {
+					i *= 3;
+					j *= 3;
+				}
+
+				return new Dimension((int) zoom * i, (int) zoom * j);
+			} else
 				return new Dimension(100, 60);
 		}
 	}

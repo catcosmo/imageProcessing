@@ -32,7 +32,7 @@ public class ImageView extends JScrollPane {
 	private boolean keepAspectRatio = true;
 	private boolean centered = true;
 	private static double zoom = 2.0;
-	private static List<ArrayList<Line>> allLines = new ArrayList<ArrayList<Line>>();
+	private List<ArrayList<Line>> allLines = new ArrayList<ArrayList<Line>>();
 
 	int pixels[] = null; // pixel array in ARGB format
 
@@ -264,10 +264,8 @@ public class ImageView extends JScrollPane {
 		}
 
 		public void paintComponent(Graphics g) {
-
 			if (image != null) {
 				Rectangle r = this.getBounds();
-
 				// limit image view magnification
 				if (maxViewMagnification > 0.0) {
 					int maxWidth = (int) (image.getWidth()
@@ -333,44 +331,56 @@ public class ImageView extends JScrollPane {
 				// g.setColor(SystemColor.RED);
 				Graphics2D g2 = (Graphics2D) g;
 
-				g2.setStroke(new BasicStroke(1));
 				for (ArrayList<Line> l : allLines) {
 					for (Line line : l) {
+						g2.setStroke(new BasicStroke(1));
 						g.setColor(line.getC());
 						double x1 = (line.getX1() * zoom + offsetX);
 						double y1 = (line.getY1() * zoom + offsetY);
 						double x2 = (line.getX2() * zoom + offsetX);
 						double y2 = (line.getY2() * zoom + offsetY);
-
 						g.drawLine((int) (x1), (int) (y1), (int) (x2),
 								(int) (y2));
+						g2.setStroke(new BasicStroke(4));
+						g.drawLine((int) (x2), (int) (y2), (int) (x2),
+								(int) (y2));
+
 					}
 				}
 
 			}
 		}
 
-		//set min size
 		public Dimension getPreferredSize() {
-			if (image != null)
-				return new Dimension((int) zoom * image.getWidth(), (int) zoom
-						* image.getHeight());
-			else
+			if (image != null) {
+				int i = image.getWidth();
+				int j = image.getHeight();
+				if (i <= 500 || j <= 500) {
+					i *= 3;
+					j *= 3;
+				}
+
+				return new Dimension((int) zoom * i, (int) zoom * j);
+			} else
 				return new Dimension(100, 60);
 		}
 	}
 
-	public static void setZoom(double value) {
+	public void setZoom(double value) {
 		zoom = value;
 		// screen.invalidate();
 		// screen.repaint();
 	}
 
 	public void setLines(List<ArrayList<Line>> allLines) {
-		ImageView.allLines = allLines;
+		this.allLines = allLines;
 
 		screen.invalidate();
 		screen.repaint();
+
+	}
+
+	public static void drawPotrace(Path p) {
 
 	}
 

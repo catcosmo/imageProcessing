@@ -188,7 +188,7 @@ public class PathFinding extends JPanel {
 											// i++) {
 				vertexList.add(p.getVertices().get(
 						actualPosition % p.getVertices().size()));
-				actualPosition += p.getPivotList()[i];
+				actualPosition += p.getPivotList()[i % p.getVertices().size()];
 			}
 			boolean first = true;
 			Vertex v1 = null;
