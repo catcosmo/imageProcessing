@@ -68,7 +68,20 @@ public class Path {
 	public void findPossiblePolygons() {
 		int pointsToReach = vertices.size();
 
-		for (int i : pivotList) {
+		for (int i = 0; i < pivotList.length; i++) {
+			int pointsReached = 0;
+			int actualPosition = i;
+			int amtLines = 0;
+			while (pointsReached < pointsToReach) {
+				pointsReached += pivotList[actualPosition];
+				actualPosition += pivotList[actualPosition];
+				actualPosition %= vertices.size();
+				amtLines++;
+			}
+			possiblePolygonStartPoints.add(amtLines);
+		}
+
+		/*for (int i : pivotList) {
 			int pointsReached = 0;
 			int actualPosition = i;
 			int amtLines = 0;
@@ -79,7 +92,7 @@ public class Path {
 				amtLines++;
 			}
 			possiblePolygonStartPoints.add(amtLines);
-		}
+		}*/
 	}
 
 	public void addPivotList(int[] pivotList) {
