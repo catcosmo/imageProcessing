@@ -32,7 +32,7 @@ public class ImageView extends JScrollPane {
 	private double maxViewMagnification = 0.0; // use 0.0 to disable limits
 	private boolean keepAspectRatio = true;
 	private boolean centered = true;
-	private static double zoom = 2.0;
+	private static double zoom = 1.0;
 	private int scale = 1;
 	private List<ArrayList<Line>> allLines = new ArrayList<ArrayList<Line>>();
 
@@ -257,6 +257,8 @@ public class ImageView extends JScrollPane {
 		public void paintComponent(Graphics g) {
 			if (image != null) {
 				Rectangle r = this.getBounds();
+				r.width *= zoom;
+				r.height *= zoom;
 				// limit image view magnification
 				if (maxViewMagnification > 0.0) {
 					int maxWidth = (int) (image.getWidth() * maxViewMagnification + 0.5);
@@ -300,8 +302,8 @@ public class ImageView extends JScrollPane {
 
 				// draw image
 				g.drawImage(image, offsetX, offsetY, r.width, r.height, this);
-				int h = (int) (image.getHeight() * zoom * 4);
-				int w = (int) (image.getWidth() * zoom * 4);
+				int h = (int) (image.getHeight() * scale * 4);
+				int w = (int) (image.getWidth() * scale * 4);
 				if (zoom > 4) {
 					g.setColor(SystemColor.LIGHT_GRAY);
 
